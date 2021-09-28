@@ -3,6 +3,8 @@ import logging
 
 import numpy as np
 import torch
+# import sys
+# np.set_printoptions(threshold=sys.maxsize)
 
 logger = logging.getLogger("experiment")
 
@@ -207,7 +209,7 @@ class OmniglotSampler:
     def __init__(self, tasks, trainset, testset):
         self.tasks = tasks
         self.task_sampler = SampleOmni(trainset, testset)
-        self.task_sampler.add_complete_iteraetor(list(range(0, int(len(self.tasks)/2))))
+        self.task_sampler.add_complete_iteraetor(list(range(0, int(len(self.tasks)/2))))  # todo: why only [0-480]?
 
     def get_complete_iterator(self):
         return self.task_sampler.complete_iterator
@@ -226,7 +228,7 @@ class OmniglotSampler:
 
     def sample_tasks(self, t, train=False):
         # assert(false)
-        dataset = self.task_sampler.get_task_trainset(t, train)
+        dataset = self.task_sampler.get_task_dataset(t, train)
         train_iterator = torch.utils.data.DataLoader(dataset,
                                                      batch_size=1,
                                                      shuffle=True, num_workers=1)
@@ -273,26 +275,18 @@ class SampleOmni:
         self.test_iterators = {}
 
     def add_complete_iteraetor(self, tasks):
-        dataset = self.get_task_trainset(tasks, True)
-        # dataset = self.get_task_testset(tasks)
-        train_iterator = torch.utils.data.DataLoader(dataset,
-                                                     batch_size=15,
-                                                     shuffle=True, num_workers=1)
+        dataset = self.get_task_dataset(tasks, True)
+        train_iterator = torch.utils.data.DataLoader(dataset, batch_size=15, shuffle=True, num_workers=1)
         self.complete_iterator = train_iterator
         logger.info("Len of complete iterator = %d", len(self.complete_iterator) * 256)
 
-        train_iterator2 = torch.utils.data.DataLoader(dataset,
-                                                      batch_size=1,
-                                                      shuffle=True, num_workers=1)
-
+        train_iterator2 = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers=1)
         self.another_complete_iterator = train_iterator2
 
     def add_task_iterator(self, task, train):
-        dataset = self.get_task_trainset([task], train)
+        dataset = self.get_task_dataset([task], train)
 
-        train_iterator = torch.utils.data.DataLoader(dataset,
-                                                     batch_size=1,
-                                                     shuffle=True, num_workers=1)
+        train_iterator = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers=1)
         self.iterators[task] = train_iterator
         print("Task %d has been added to the list" % task)
         return train_iterator
@@ -311,40 +305,27 @@ class SampleOmni:
                 else:
                     return self.add_task_iterator(task, False)
 
-    def get_task_trainset(self, task, train):
+    def get_task_dataset(self, task, train):
+        """
+            returns a dataset consist of tasks in 'task'.
+        """
 
         if train:
-            trainset = copy.deepcopy(self.trainset)
+            dataset = copy.deepcopy(self.trainset)
         else:
-            trainset = copy.deepcopy(self.testset)
-        class_labels = np.array([x[1] for x in trainset._flat_character_images])
+            dataset = copy.deepcopy(self.testset)
 
+        class_labels = np.array([x[1] for x in dataset._flat_character_images])
         indices = np.zeros_like(class_labels)
         for a in task:
             indices = indices + (class_labels == a).astype(int)
-        indices = np.nonzero(indices)
+        indices = np.nonzero(indices)[0]
 
-        trainset._flat_character_images = [trainset._flat_character_images[i] for i in indices[0]]
-        trainset.data = [trainset.data[i] for i in indices[0]]
-        trainset.targets = [trainset.targets[i] for i in indices[0]]
+        dataset._flat_character_images = [dataset._flat_character_images[i] for i in indices]
+        dataset.data = [dataset.data[i] for i in indices]
+        dataset.targets = [dataset.targets[i] for i in indices]
 
-        return trainset
-
-    def get_task_testset(self, task):
-
-        trainset = copy.deepcopy(self.testset)
-        class_labels = np.array([x[1] for x in trainset._flat_character_images])
-
-        indices = np.zeros_like(class_labels)
-        for a in task:
-            indices = indices + (class_labels == a).astype(int)
-        indices = np.nonzero(indices)
-
-        trainset._flat_character_images = [trainset._flat_character_images[i] for i in indices[0]]
-        trainset.data = [trainset.data[i] for i in indices[0]]
-        trainset.targets = [trainset.targets[i] for i in indices[0]]
-
-        return trainset
+        return dataset
 
     def filter_upto(self, task):
 
@@ -450,4 +431,3 @@ class SampleImagenet:
         trainset.data = trainset.data[trainset.data['target'] <= task]
 
         return trainset
-

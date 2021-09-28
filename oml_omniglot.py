@@ -40,15 +40,12 @@ def main():
 
 
 
-    dataset = df.DatasetFactory.get_dataset(args['dataset'], background=True, train=True,path=args["path"], all=True)
+    dataset = df.DatasetFactory.get_dataset(args['dataset'], background=True, train=True, path=args["path"], all=True)
     dataset_test = df.DatasetFactory.get_dataset(args['dataset'], background=True, train=False, path=args["path"], all=True)
 
-    # Iterators used for evaluation
-    iterator_test = torch.utils.data.DataLoader(dataset_test, batch_size=5,
-                                                shuffle=True, num_workers=1)
-
-    iterator_train = torch.utils.data.DataLoader(dataset, batch_size=5,
-                                                 shuffle=True, num_workers=1)
+    # Iterators used for evaluation todo: does this guarantee no overlap b/w train and test sets?
+    iterator_train = torch.utils.data.DataLoader(dataset, batch_size=5, shuffle=True, num_workers=1)
+    iterator_test = torch.utils.data.DataLoader(dataset_test, batch_size=5, shuffle=True, num_workers=1)
 
     sampler = ts.SamplerFactory.get_sampler(args['dataset'], args['classes'], dataset, dataset_test)
 
@@ -63,7 +60,6 @@ def main():
 
     maml = MetaLearingClassification(args, config).to(device)
 
-    
     for step in range(args['steps']):
 
         t1 = np.random.choice(args['traj_classes'], args['tasks'], replace=False)

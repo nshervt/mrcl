@@ -32,9 +32,8 @@ class Omniglot(data.Dataset):
         'images_evaluation': '6b91aef0f799c5bb55b94e3f2daec811'
     }
 
-    def __init__(self, root, background=True,
-                 transform=None, target_transform=None,
-                 download=False, train=True, all=False):
+    def __init__(self, root, background=True, transform=None, target_transform=None, download=False, train=True,
+                 all=False):
         self.root = join(os.path.expanduser(root), self.folder)
         self.background = background
         self.transform = transform
@@ -50,13 +49,16 @@ class Omniglot(data.Dataset):
 
         self.target_folder = join(self.root, self._get_target_folder())
         self._alphabets = list_dir(self.target_folder)
-        self._characters = sum([[join(a, c) for c in list_dir(join(self.target_folder, a))]
-                                for a in self._alphabets], [])
+        self._characters = sum([[join(a, c) for c in list_dir(join(self.target_folder, a))] for a in self._alphabets],
+                               [])
         self._character_images = [[(image, idx) for image in list_files(join(self.target_folder, character), '.png')]
                                   for idx, character in enumerate(self._characters)]
-        self._flat_character_images = sum(self._character_images, [])
-        self.data = [x[0] for x in self._flat_character_images]
-        self.targets = [x[1] for x in self._flat_character_images]
+
+        self._flat_character_images = sum(self._character_images, [])  # list of image name and label tuples
+        self.data = [x[0] for x in self._flat_character_images]  # list of image names
+        self.targets = [x[1] for x in self._flat_character_images]  # list of labels
+
+        # -- separates the first 15 instances (train) or the last 5 instances (test) of each character
         self.data2 = []
         self.targets2 = []
         self.new_flat = []
@@ -67,7 +69,6 @@ class Omniglot(data.Dataset):
                     self.data2.append(self.data[b])
                     self.targets2.append(self.targets[b])
                     self.new_flat.append(self._flat_character_images[b])
-                    # print(self.targets[start+b])
             else:
                 for b in range(start + 15, start + 20):
                     self.data2.append(self.data[b])

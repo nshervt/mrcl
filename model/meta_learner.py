@@ -200,15 +200,11 @@ class MetaLearingClassification(nn.Module):
 
     def sample_training_data(self, iterators, it2, steps=2, reset=True):
 
-        # Sample data for inner and meta updates
-
+        # -- Sample data for inner and meta updates
         x_traj, y_traj, x_rand, y_rand, x_rand_temp, y_rand_temp = [], [], [], [], [], []
 
         assert(steps < 16)
         counter = 0
-        #
-        x_rand_temp = []
-        y_rand_temp = []
 
         class_counter = 0
         for it1 in iterators:
@@ -255,10 +251,6 @@ class MetaLearingClassification(nn.Module):
         x_rand = torch.cat([x_rand, x_rand_temp], 1)
         y_rand = torch.cat([y_rand, y_rand_temp], 1)
 
-        # print(y_traj)
-        # print(y_rand)
-        #
-        # quit()
         return x_traj, y_traj, x_rand, y_rand
 
     def sample_training_data_paper(self, iterators, it2, steps=2, reset=True):
