@@ -25,7 +25,6 @@ def main():
 
     args = utils.get_run(vars(p.parse_known_args()[0]), rank)
 
-
     utils.set_seed(args['seed'])
 
     my_experiment = experiment(args['name'], args, "../results/", commit_changes=False, rank=0, seed=1)
@@ -63,6 +62,7 @@ def main():
         t1 = np.random.choice(args['traj_classes'], args['tasks'], replace=False)
         for t in t1:
             d_traj_iterators.append(sampler.sample_task([t]))  # task t from t1~[481-962] in batches of 1
+
         d_rand_iterator = sampler.get_complete_iterator()  # tasks [0-480] in batches of 15
 
 
