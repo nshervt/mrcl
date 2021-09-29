@@ -200,55 +200,41 @@ class MetaLearingClassification(nn.Module):
 
     def sample_training_data(self, iterators, it2, steps=2, reset=True):
 
+        assert (steps < 16)
+
         # -- Sample data for inner and meta updates
         x_traj, y_traj, x_rand, y_rand, x_rand_temp, y_rand_temp = [], [], [], [], [], []
 
-        assert(steps < 16)
-        counter = 0
-
-        class_counter = 0
         for it1 in iterators:
-            # assert (len(iterators) == 1)
-            steps_inner = 0
-            rand_counter = 0
-            for img, data in it1:
+            for idx, (img, data) in enumerate(it1):
                 class_to_reset = data[0].item()
                 if reset:
                     # Resetting weights corresponding to classes in the inner updates; this prevents
                     # the learner from memorizing the data (which would kill the gradients due to inner updates)
-                    self.reset_classifer(class_to_reset)
+                    self.reset_classifer(class_to_reset)  # todo: not sure what is the purpose
 
-                counter += 1
-                if steps_inner < steps:
+                if idx < steps:
                     x_traj.append(img)
                     y_traj.append(data)
-                    steps_inner += 1
-
-                else:
+                elif idx < steps + 5:
                     x_rand_temp.append(img)
                     y_rand_temp.append(data)
-                    rand_counter += 1
-                    if rand_counter == 5:
-                        break
-            class_counter += 1
+                else:
+                    break
 
-        # Sampling the random batch of data
-        counter = 0
+        # -- Sampling the random batch of data
         for img, data in it2:
-            if counter == 1:
-                break
             x_rand.append(img)
             y_rand.append(data)
-            counter += 1
+            break
 
         y_rand_temp = torch.cat(y_rand_temp).unsqueeze(0)
         x_rand_temp = torch.cat(x_rand_temp).unsqueeze(0)
 
-
         x_traj, y_traj, x_rand, y_rand = torch.stack(x_traj), torch.stack(y_traj), torch.stack(x_rand), torch.stack(
             y_rand)
 
-        x_rand = torch.cat([x_rand, x_rand_temp], 1)
+        x_rand = torch.cat([x_rand, x_rand_temp], 1)  # todo: why are we mixing x_rand & x_rand_temp?
         y_rand = torch.cat([y_rand, y_rand_temp], 1)
 
         return x_traj, y_traj, x_rand, y_rand
