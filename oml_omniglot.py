@@ -33,12 +33,9 @@ def main():
 
     logger = logging.getLogger('experiment')
 
-    # Using first 963 classes of the omniglot as the meta-training set
+    # -- Using first 963 classes of the omniglot as the meta-training set
     args['classes'] = list(range(963))
-
     args['traj_classes'] = list(range(int(963/2), 963))
-
-
 
     dataset = df.DatasetFactory.get_dataset(args['dataset'], background=True, train=True, path=args["path"], all=True)
     dataset_test = df.DatasetFactory.get_dataset(args['dataset'], background=True, train=False, path=args["path"], all=True)
@@ -62,18 +59,16 @@ def main():
 
     for step in range(args['steps']):
 
-        t1 = np.random.choice(args['traj_classes'], args['tasks'], replace=False)
-
         d_traj_iterators = []
+        t1 = np.random.choice(args['traj_classes'], args['tasks'], replace=False)
         for t in t1:
-            d_traj_iterators.append(sampler.sample_task([t]))
+            d_traj_iterators.append(sampler.sample_task([t]))  # task t from t1~[481-962] in batches of 1
+        d_rand_iterator = sampler.get_complete_iterator()  # tasks [0-480] in batches of 15
 
-        d_rand_iterator = sampler.get_complete_iterator()
 
         x_spt, y_spt, x_qry, y_qry = maml.sample_training_data(d_traj_iterators, d_rand_iterator,
                                                                steps=args['update_step'], reset=not args['no_reset'])
-        if torch.cuda.is_available():
-            x_spt, y_spt, x_qry, y_qry = x_spt.to(device), y_spt.to(device), x_qry.to(device), y_qry.to(device)
+        x_spt, y_spt, x_qry, y_qry = x_spt.to(device), y_spt.to(device), x_qry.to(device), y_qry.to(device)
 
         accs, loss = maml(x_spt, y_spt, x_qry, y_qry)
 
