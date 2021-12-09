@@ -3,7 +3,7 @@ import logging
 import numpy as np
 import torch
 from torch.nn import functional as F
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 
 import configs.classification.class_parser_eval as class_parser_eval
 import datasets.datasetfactory as df

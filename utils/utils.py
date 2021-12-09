@@ -40,7 +40,8 @@ def freeze_layers(layers_to_freeze, maml):
     for a in list_of_names:
         logger.info("TLN layer = %s", a[0])
 
-def log_accuracy(maml, my_experiment, iterator_test, device, writer, step):
+
+def log_accuracy(maml, my_experiment, iterator_test, device, writer=None, step=None):
     correct = 0
     torch.save(maml.net, my_experiment.path + "learner.model")
     for img, target in iterator_test:
@@ -50,7 +51,6 @@ def log_accuracy(maml, my_experiment, iterator_test, device, writer, step):
             logits_q = maml.net(img, vars=None)
             pred_q = F.softmax(logits_q, dim=1).argmax(dim=1)
             correct += torch.eq(pred_q, target).sum().item() / len(img)
-    writer.add_scalar('/metatrain/test/classifier/accuracy', correct / len(iterator_test), step)
     logger.info("Test Accuracy = %s", str(correct / len(iterator_test)))
 
 

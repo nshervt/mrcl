@@ -3,7 +3,7 @@ import logging
 
 import numpy as np
 import torch
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 
 import datasets.datasetfactory as df
 import datasets.task_sampler as ts
@@ -24,11 +24,12 @@ def main():
     print("All args = ", all_args)
 
     args = utils.get_run(vars(p.parse_known_args()[0]), rank)
+    verbos = True
 
     utils.set_seed(args['seed'])
 
     my_experiment = experiment(args['name'], args, "../results/", commit_changes=False, rank=0, seed=1)
-    writer = SummaryWriter(my_experiment.path + "tensorboard")
+    # writer = SummaryWriter(my_experiment.path + "tensorboard")
 
     logger = logging.getLogger('experiment')
 
@@ -65,20 +66,22 @@ def main():
 
         d_rand_iterator = sampler.get_complete_iterator()  # tasks [0-480] in batches of 15
 
-
         x_spt, y_spt, x_qry, y_qry = maml.sample_training_data(d_traj_iterators, d_rand_iterator,
                                                                steps=args['update_step'], reset=not args['no_reset'])
         x_spt, y_spt, x_qry, y_qry = x_spt.to(device), y_spt.to(device), x_qry.to(device), y_qry.to(device)
 
-        accs, loss = maml(x_spt, y_spt, x_qry, y_qry)
+        accs, loss = maml(x_spt, y_spt, x_qry, y_qry, verbos=verbos)
 
-        # Evaluation during training for sanity checks
-        if step % 40 == 5:
-            writer.add_scalar('/metatrain/train/accuracy', accs[-1], step)
-            logger.info('step: %d \t training acc %s', step, str(accs))
-        if step % 300 == 3:
-            utils.log_accuracy(maml, my_experiment, iterator_test, device, writer, step)
-            utils.log_accuracy(maml, my_experiment, iterator_train, device, writer, step)
+        # -- Evaluation during training for sanity checks
+        if verbos:
+            if step % 40 == 5:
+                print(accs[-1], step)
+                logger.info('\nstep: %d \t training acc %s', step, str(accs))
+            if step % 300 == 3:
+                # todo: my_experiment? , iterator_test?
+                utils.log_accuracy(maml, my_experiment, iterator_test, device)
+                utils.log_accuracy(maml, my_experiment, iterator_train, device)
+                pass
 
 
 if __name__ == '__main__':

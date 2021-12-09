@@ -5,6 +5,7 @@ import torch
 from torch import nn
 from torch import optim
 from torch.nn import functional as F
+from torchviz import make_dot
 
 import model.learner as Learner
 
@@ -293,9 +294,7 @@ class MetaLearingClassification(nn.Module):
         if fast_weights is None:
             fast_weights = self.net.parameters()
 
-        grad = torch.autograd.grad(loss, self.net.get_adaptation_parameters(fast_weights),
-                                   create_graph=True)
-
+        grad = torch.autograd.grad(loss, self.net.get_adaptation_parameters(fast_weights), create_graph=True)
         new_weights = []
         for p in fast_weights:
             if p.adaptation:
@@ -321,7 +320,7 @@ class MetaLearingClassification(nn.Module):
         correct = torch.eq(pred_q, y).sum().item()
         return correct
 
-    def forward(self, x_traj, y_traj, x_rand, y_rand):
+    def forward(self, x_traj, y_traj, x_rand, y_rand, verbos=False):
         """
         :param x_traj:   Input data of sampled trajectory
         :param y_traj:   Ground truth of the sampled trajectory
@@ -336,22 +335,22 @@ class MetaLearingClassification(nn.Module):
         # Doing a single inner update to get updated weights
         fast_weights = self.inner_update(x_traj[0], None, y_traj[0])
 
-        with torch.no_grad():
-            # Meta loss before any inner updates
-            meta_loss, last_layer_logits = self.meta_loss(x_rand[0], self.net.parameters(), y_rand[0])
-            meta_losses[0] += meta_loss
+        if verbos:
+            with torch.no_grad():
+                # Meta loss before any inner updates
+                meta_loss, last_layer_logits = self.meta_loss(x_rand[0], self.net.parameters(), y_rand[0])
+                meta_losses[0] += meta_loss
 
-            classification_accuracy = self.eval_accuracy(last_layer_logits, y_rand[0])
-            accuracy_meta_set[0] = accuracy_meta_set[0] + classification_accuracy
+                classification_accuracy = self.eval_accuracy(last_layer_logits, y_rand[0])
+                accuracy_meta_set[0] = accuracy_meta_set[0] + classification_accuracy
 
-            # Meta loss after a single inner update
-            meta_loss, last_layer_logits = self.meta_loss(x_rand[0], fast_weights, y_rand[0])
-            meta_losses[1] += meta_loss
+                # Meta loss after a single inner update
+                meta_loss, last_layer_logits = self.meta_loss(x_rand[0], fast_weights, y_rand[0])
+                meta_losses[1] += meta_loss
 
-            classification_accuracy = self.eval_accuracy(last_layer_logits, y_rand[0])
-            accuracy_meta_set[1] = accuracy_meta_set[1] + classification_accuracy
+                classification_accuracy = self.eval_accuracy(last_layer_logits, y_rand[0])
+                accuracy_meta_set[1] = accuracy_meta_set[1] + classification_accuracy
 
-        # print(len(x_traj))
         for k in range(1, len(x_traj)):
             # Doing inner updates using fast weights
             fast_weights = self.inner_update(x_traj[k], fast_weights, y_traj[k])
@@ -360,11 +359,17 @@ class MetaLearingClassification(nn.Module):
             meta_loss, logits = self.meta_loss(x_rand[0], fast_weights, y_rand[0])
             meta_losses[k + 1] += meta_loss
 
-            # Computing accuracy on the meta and traj set for understanding the learning
-            with torch.no_grad():
-                pred_q = F.softmax(logits, dim=1).argmax(dim=1)
-                classification_accuracy = torch.eq(pred_q, y_rand[0]).sum().item()  # convert to numpy
-                accuracy_meta_set[k + 1] = accuracy_meta_set[k + 1] + classification_accuracy
+            make_dot(logits, params=dict(list(self.net.named_parameters()))).render('comp_grph' + str(k), format='png')
+
+            if verbos:
+                # Computing accuracy on the meta and traj set for understanding the learning
+                with torch.no_grad():
+                    pred_q = F.softmax(logits, dim=1).argmax(dim=1)
+                    classification_accuracy = torch.eq(pred_q, y_rand[0]).sum().item()  # convert to numpy
+                    accuracy_meta_set[k + 1] = accuracy_meta_set[k + 1] + classification_accuracy
+
+        make_dot(logits, params=dict(list(self.net.named_parameters()))).render('comp_grph' + str(k), format='png')
+        quit()
 
         # Taking the meta gradient step
         self.optimizer.zero_grad()
