@@ -229,7 +229,7 @@ class OmniglotSampler:
         dataset = self.task_sampler.get_task_trainset(t, train)
         train_iterator = torch.utils.data.DataLoader(dataset,
                                                      batch_size=1,
-                                                     shuffle=True, num_workers=1)
+                                                     shuffle=True)
         return train_iterator
 
 
@@ -260,7 +260,7 @@ class ImagenetSampler:
         dataset = self.task_sampler.get_task_trainset(t, train)
         train_iterator = torch.utils.data.DataLoader(dataset,
                                                      batch_size=1,
-                                                     shuffle=True, num_workers=1)
+                                                     shuffle=True)
         return train_iterator
 
 class SampleOmni:
@@ -277,13 +277,13 @@ class SampleOmni:
         # dataset = self.get_task_testset(tasks)
         train_iterator = torch.utils.data.DataLoader(dataset,
                                                      batch_size=15,
-                                                     shuffle=True, num_workers=1)
+                                                     shuffle=True)
         self.complete_iterator = train_iterator
         logger.info("Len of complete iterator = %d", len(self.complete_iterator) * 256)
 
         train_iterator2 = torch.utils.data.DataLoader(dataset,
                                                       batch_size=1,
-                                                      shuffle=True, num_workers=1)
+                                                      shuffle=True)
 
         self.another_complete_iterator = train_iterator2
 
@@ -292,9 +292,9 @@ class SampleOmni:
 
         train_iterator = torch.utils.data.DataLoader(dataset,
                                                      batch_size=1,
-                                                     shuffle=True, num_workers=1)
+                                                     shuffle=True)
         self.iterators[task] = train_iterator
-        print("Task %d has been added to the list" % task)
+        # print("Task %d has been added to the list" % task)
         return train_iterator
 
     def get(self, tasks, train):
@@ -368,13 +368,13 @@ class SampleImagenet:
         # dataset = self.get_task_testset(tasks)
         train_iterator = torch.utils.data.DataLoader(dataset,
                                                      batch_size=10,
-                                                     shuffle=True, num_workers=1)
+                                                     shuffle=True)
         self.complete_iterator = train_iterator
         logger.info("Len of complete iterator = %d", len(self.complete_iterator) * 256)
 
         train_iterator2 = torch.utils.data.DataLoader(dataset,
                                                       batch_size=1,
-                                                      shuffle=True, num_workers=1)
+                                                      shuffle=True)
 
         self.another_complete_iterator = train_iterator2
 
@@ -383,9 +383,9 @@ class SampleImagenet:
 
         train_iterator = torch.utils.data.DataLoader(dataset,
                                                      batch_size=1,
-                                                     shuffle=True, num_workers=1)
+                                                     shuffle=True)
         self.iterators[task] = train_iterator
-        print("Task %d has been added to the list" % task)
+        # print("Task %d has been added to the list" % task)
         return train_iterator
 
     def get(self, tasks, train):

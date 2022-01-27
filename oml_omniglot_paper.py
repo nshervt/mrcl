@@ -27,7 +27,7 @@ def main():
 
     utils.set_seed(args['seed'])
 
-    my_experiment = experiment(args['name'], args, "../results/", commit_changes=False, rank=0, seed=1)
+    my_experiment = experiment(args['name'], args, "./results/", commit_changes=False, rank=0, seed=1)
     writer = SummaryWriter(my_experiment.path + "tensorboard")
 
     logger = logging.getLogger('experiment')
@@ -80,6 +80,7 @@ def main():
         accs, loss = maml(x_spt, y_spt, x_qry, y_qry)
 
         # Evaluation during training for sanity checks
+        print(step)
         if step % 40 == 5:
             writer.add_scalar('/metatrain/train/accuracy', accs[-1], step)
             logger.info('step: %d \t training acc %s', step, str(accs))

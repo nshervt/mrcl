@@ -59,7 +59,7 @@ class Learner(nn.Module):
         return vars_list
 
     def add_rotation(self):
-        self.rotate = nn.Parameter(torch.ones(2304,2304))
+        self.rotate = nn.Parameter(torch.ones(2304, 2304))
         torch.nn.init.uniform_(self.rotate)
         self.rotate_inverse = nn.Parameter(torch.inverse(self.rotate))
         # print(self.rotate.shape)
@@ -125,6 +125,8 @@ class Learner(nn.Module):
 
             else:
                 raise NotImplementedError
+
+            # print(name, x.shape)
         assert idx == len(vars)
         return x
 

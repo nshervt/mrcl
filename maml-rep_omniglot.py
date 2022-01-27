@@ -27,6 +27,7 @@ def main(args):
     args.classes = list(range(963))
 
     args.traj_classes = list(range(963))
+
     #
     dataset = df.DatasetFactory.get_dataset(args.dataset, background=True, train=True, all=True)
     dataset_test = df.DatasetFactory.get_dataset(args.dataset, background=False, train=True, all=True)

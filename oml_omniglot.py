@@ -1,6 +1,6 @@
 import argparse
 import logging
-
+import warnings
 import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
@@ -15,6 +15,8 @@ from model.meta_learner import MetaLearingClassification
 
 logger = logging.getLogger('experiment')
 
+warnings.simplefilter(action='ignore', category=UserWarning)
+
 
 def main():
     p = class_parser.Parser()
@@ -28,7 +30,7 @@ def main():
 
     utils.set_seed(args['seed'])
 
-    my_experiment = experiment(args['name'], args, "../results/", commit_changes=False, rank=0, seed=1)
+    my_experiment = experiment(args['name'], args, "./results/", commit_changes=False, rank=0, seed=1)
     writer = SummaryWriter(my_experiment.path + "tensorboard")
 
     logger = logging.getLogger('experiment')
@@ -37,8 +39,6 @@ def main():
     args['classes'] = list(range(963))
 
     args['traj_classes'] = list(range(int(963/2), 963))
-
-
 
     dataset = df.DatasetFactory.get_dataset(args['dataset'], background=True, train=True,path=args["path"], all=True)
     dataset_test = df.DatasetFactory.get_dataset(args['dataset'], background=True, train=False, path=args["path"], all=True)
@@ -76,18 +76,17 @@ def main():
 
         x_spt, y_spt, x_qry, y_qry = maml.sample_training_data(d_traj_iterators, d_rand_iterator,
                                                                steps=args['update_step'], reset=not args['no_reset'])
+
         if torch.cuda.is_available():
             x_spt, y_spt, x_qry, y_qry = x_spt.to(device), y_spt.to(device), x_qry.to(device), y_qry.to(device)
+        loss, acc = maml(x_spt, y_spt, x_qry, y_qry)
 
-        accs, loss = maml(x_spt, y_spt, x_qry, y_qry)
+        print('Train EpisodeL {}\tLoss: {:.6f}\tAccuracy: {:.3f}'.format(step, loss, acc))
 
-        # Evaluation during training for sanity checks
-        if step % 40 == 5:
-            writer.add_scalar('/metatrain/train/accuracy', accs[-1], step)
-            logger.info('step: %d \t training acc %s', step, str(accs))
-        if step % 300 == 3:
-            utils.log_accuracy(maml, my_experiment, iterator_test, device, writer, step)
-            utils.log_accuracy(maml, my_experiment, iterator_train, device, writer, step)
+        # -- store model
+        if step % 100 == 0:
+            print('Saving model ...')
+            torch.save(maml.net, my_experiment.path + "learner.model")
 
 
 if __name__ == '__main__':

@@ -5,9 +5,11 @@ from os.path import join
 
 import numpy as np
 import torch.utils.data as data
-from PIL import Image
+from PIL import Image, ImageShow
 
 from .utils import download_url, check_integrity, list_dir, list_files
+
+import torchvision.transforms as transforms
 
 
 class Omniglot(data.Dataset):
@@ -101,6 +103,8 @@ class Omniglot(data.Dataset):
         if image_path not in self.images_cached:
 
             image = Image.open(image_path, mode='r').convert('L')
+            # ImageShow.show(image)
+            # quit()
             if self.transform:
                 image = self.transform(image)
 

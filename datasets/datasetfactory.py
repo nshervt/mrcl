@@ -11,9 +11,8 @@ class DatasetFactory:
     def get_dataset(name, train=True, path=None, background=True, all=False):
 
         if name == "omniglot":
-            train_transform = transforms.Compose(
-                [transforms.Resize((84, 84)),
-                 transforms.ToTensor()])
+            dim = 28
+            train_transform = transforms.Compose([transforms.Resize((dim, dim)), transforms.ToTensor()])
             if path is None:
                 return om.Omniglot("../data/omni", background=background, download=True, train=train,
                                    transform=train_transform, all=all)
